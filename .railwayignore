@@ -1,0 +1,7 @@
+# Ignore root package.json to prevent workspace errors
+/package.json
+/package-lock.json
+/node_modules
+
+# Ignore frontend
+/frontend
