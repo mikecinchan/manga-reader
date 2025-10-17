@@ -64,11 +64,23 @@ router.get('/search', verifyAuth, async (req, res, next) => {
       const author = manga.relationships.find((rel) => rel.type === 'author');
       const artist = manga.relationships.find((rel) => rel.type === 'artist');
 
+      // Debug logging
+      if (coverArt) {
+        console.log(`[Manga ${manga.id}] Cover art:`, {
+          fileName: coverArt.attributes?.fileName,
+          hasFileName: !!coverArt.attributes?.fileName,
+          coverArtKeys: Object.keys(coverArt),
+          attributesKeys: coverArt.attributes ? Object.keys(coverArt.attributes) : 'no attributes'
+        });
+      } else {
+        console.log(`[Manga ${manga.id}] No cover art found in relationships`);
+      }
+
       return {
         id: manga.id,
         ...manga.attributes,
         coverUrl: coverArt
-          ? mangadexService.getCoverUrl(manga.id, coverArt.attributes.fileName, '512')
+          ? mangadexService.getCoverUrl(manga.id, coverArt.attributes?.fileName, '512')
           : null,
         author: author?.attributes?.name || 'Unknown',
         artist: artist?.attributes?.name || 'Unknown',
