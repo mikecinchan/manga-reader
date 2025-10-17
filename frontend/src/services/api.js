@@ -20,9 +20,19 @@ api.interceptors.request.use(
   (config) => {
     if (getAuthToken) {
       const token = getAuthToken();
+      console.log('[API] Request interceptor:', {
+        hasGetAuthToken: !!getAuthToken,
+        hasToken: !!token,
+        tokenPreview: token ? `${token.substring(0, 20)}...` : 'none',
+        url: config.url
+      });
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+      } else {
+        console.warn('[API] No auth token available for request to:', config.url);
       }
+    } else {
+      console.warn('[API] getAuthToken function not set');
     }
     return config;
   },

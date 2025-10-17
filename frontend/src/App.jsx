@@ -13,12 +13,17 @@ import BookmarksPage from './pages/BookmarksPage';
 import './styles/App.css';
 
 function AppContent() {
-  const { authToken } = useAuth();
+  const { authToken, currentUser } = useAuth();
 
   useEffect(() => {
     // Set up the auth token getter for API calls
     setAuthTokenGetter(() => authToken);
-  }, [authToken]);
+    console.log('[App] Auth token updated:', {
+      hasUser: !!currentUser,
+      hasToken: !!authToken,
+      tokenPreview: authToken ? `${authToken.substring(0, 20)}...` : 'none'
+    });
+  }, [authToken, currentUser]);
 
   return (
     <div className="app">
