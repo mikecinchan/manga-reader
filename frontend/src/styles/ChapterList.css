@@ -1,0 +1,122 @@
+.chapter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.volume-group {
+  background-color: var(--surface);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.volume-header {
+  background-color: var(--secondary-color);
+  color: white;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.chapter-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.chapter-item:last-child {
+  border-bottom: none;
+}
+
+.chapter-item:hover {
+  background-color: var(--background);
+}
+
+.chapter-item.bookmarked {
+  background-color: rgba(255, 103, 64, 0.1);
+  border-left: 3px solid var(--primary-color);
+}
+
+.chapter-main {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.chapter-number {
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 60px;
+}
+
+.bookmark-icon {
+  color: var(--primary-color);
+  font-size: 0.9rem;
+}
+
+.chapter-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.chapter-title {
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chapter-meta {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.separator {
+  color: var(--border-color);
+}
+
+.chapter-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.download-icon {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.download-icon.cached {
+  color: var(--success);
+}
+
+@media (min-width: 768px) {
+  .chapter-item {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .chapter-number {
+    min-width: 80px;
+    font-size: 1.05rem;
+  }
+
+  .chapter-meta {
+    flex-wrap: nowrap;
+  }
+}

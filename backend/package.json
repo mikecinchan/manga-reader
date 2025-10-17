@@ -1,0 +1,31 @@
+{
+  "name": "mangadex-reader-backend",
+  "version": "1.0.0",
+  "description": "Backend API server for MangaDex reader",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "axios": "^1.6.7",
+    "firebase-admin": "^12.0.0",
+    "dotenv": "^16.4.1",
+    "express-rate-limit": "^7.1.5",
+    "node-cache": "^5.1.2",
+    "helmet": "^7.1.0",
+    "compression": "^1.7.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  },
+  "keywords": [
+    "mangadex",
+    "api",
+    "proxy"
+  ],
+  "author": "",
+  "license": "MIT"
+}

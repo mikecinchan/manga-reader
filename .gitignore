@@ -1,0 +1,18 @@
+node_modules/
+.env
+*.log
+.DS_Store
+
+# Backend
+backend/src/config/serviceAccountKey.json
+backend/.env
+
+# Frontend
+frontend/build/
+frontend/.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

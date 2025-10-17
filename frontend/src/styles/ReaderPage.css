@@ -1,0 +1,209 @@
+.reader-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background-color: #1a1a1a;
+  z-index: 9999;
+  overflow-y: auto;
+}
+
+.reader-loading, .reader-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  color: white;
+  text-align: center;
+  padding: 2rem;
+}
+
+.reader-error p {
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.btn-close-error {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.reader-controls {
+  position: fixed;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
+
+.reader-controls.top {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+}
+
+.reader-controls.bottom {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  justify-content: space-between;
+}
+
+.reader-controls.visible {
+  opacity: 1;
+}
+
+.btn-control, .btn-nav {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.btn-control:hover:not(:disabled), .btn-nav:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-control:disabled, .btn-nav:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.reader-info {
+  flex: 1;
+  color: white;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.manga-title-header {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.chapter-title {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.reader-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.reader-image-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.reader-image {
+  max-width: 100%;
+  max-height: 100vh;
+  width: auto;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.image-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  color: white;
+  text-align: center;
+}
+
+.btn-retry {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+}
+
+.page-indicator {
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.navigation-hint {
+  position: fixed;
+  bottom: 80px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 5;
+}
+
+.navigation-hint.visible {
+  opacity: 1;
+}
+
+.hint-left, .hint-right {
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  backdrop-filter: blur(10px);
+}
+
+@media (min-width: 768px) {
+  .reader-controls {
+    padding: 1.5rem 2rem;
+  }
+
+  .manga-title-header {
+    font-size: 1.1rem;
+  }
+
+  .chapter-title {
+    font-size: 0.95rem;
+  }
+
+  .page-indicator {
+    font-size: 1rem;
+  }
+
+  .reader-image {
+    max-height: calc(100vh - 4rem);
+  }
+}
+
+/* Desktop - larger images */
+@media (min-width: 1024px) {
+  .reader-image-container {
+    padding: 2rem;
+  }
+}

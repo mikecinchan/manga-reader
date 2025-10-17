@@ -1,0 +1,17 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+  padding-top: 60px; /* Account for fixed navbar */
+  min-height: calc(100vh - 60px);
+}
+
+@media (min-width: 768px) {
+  .main-content {
+    padding-top: 70px;
+  }
+}
