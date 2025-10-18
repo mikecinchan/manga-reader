@@ -1,4 +1,5 @@
 import React from 'react';
+import { getProxiedImageUrl } from '../utils/imageProxy';
 import '../styles/MangaCard.css';
 
 function MangaCard({ manga, onClick }) {
@@ -7,11 +8,14 @@ function MangaCard({ manga, onClick }) {
   // Get the first available title
   const displayTitle = title?.en || title?.['ja-ro'] || title?.[Object.keys(title)[0]] || 'Unknown Title';
 
+  // Use proxied URL for production to bypass hotlink protection
+  const proxiedCoverUrl = getProxiedImageUrl(coverUrl);
+
   return (
     <div className="manga-card" onClick={onClick}>
       <div className="manga-cover">
-        {coverUrl ? (
-          <img src={coverUrl} alt={displayTitle} loading="lazy" />
+        {proxiedCoverUrl ? (
+          <img src={proxiedCoverUrl} alt={displayTitle} loading="lazy" />
         ) : (
           <div className="no-cover">No Cover</div>
         )}

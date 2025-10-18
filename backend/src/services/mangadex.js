@@ -134,6 +134,10 @@ async function getChapterImages(chapterId) {
  * MangaDex cover images are served from uploads.mangadex.org
  * Format: https://uploads.mangadex.org/covers/{mangaId}/{fileName}
  * The fileName already includes the extension (usually .jpg or .png)
+ *
+ * Note: For production deployment on Netlify, these URLs will be proxied through
+ * a serverless function to bypass hotlink protection.
+ * The frontend will handle the proxying transformation.
  */
 function getCoverUrl(mangaId, fileName, quality = '512') {
   if (!fileName) return null;

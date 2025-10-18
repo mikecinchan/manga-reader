@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { bookmarksAPI } from '../services/api';
+import { getProxiedImageUrl } from '../utils/imageProxy';
 import { FaTrash } from 'react-icons/fa';
 import '../styles/BookmarksPage.css';
 
@@ -96,18 +97,20 @@ function BookmarksPage() {
         </div>
       ) : (
         <div className="bookmarks-grid">
-          {bookmarks.map((bookmark) => (
-            <div key={bookmark.id} className="bookmark-card">
-              <div
-                className="bookmark-cover"
-                onClick={() => handleViewManga(bookmark.mangaId)}
-              >
-                {bookmark.coverUrl ? (
-                  <img src={bookmark.coverUrl} alt={bookmark.mangaTitle} />
-                ) : (
-                  <div className="no-cover">No Cover</div>
-                )}
-              </div>
+          {bookmarks.map((bookmark) => {
+            const proxiedCoverUrl = getProxiedImageUrl(bookmark.coverUrl);
+            return (
+              <div key={bookmark.id} className="bookmark-card">
+                <div
+                  className="bookmark-cover"
+                  onClick={() => handleViewManga(bookmark.mangaId)}
+                >
+                  {proxiedCoverUrl ? (
+                    <img src={proxiedCoverUrl} alt={bookmark.mangaTitle} />
+                  ) : (
+                    <div className="no-cover">No Cover</div>
+                  )}
+                </div>
 
               <div className="bookmark-info">
                 <h3
@@ -144,7 +147,8 @@ function BookmarksPage() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

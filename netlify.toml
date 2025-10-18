@@ -10,6 +10,10 @@
   # Default build command
   command = "npm run build"
 
+[functions]
+  # Directory where serverless functions are located
+  directory = "netlify/functions/"
+
 # Redirect all requests to index.html for React Router
 [[redirects]]
   from = "/*"

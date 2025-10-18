@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { mangaAPI, bookmarksAPI } from '../services/api';
+import { getProxiedImageUrl } from '../utils/imageProxy';
 import ChapterList from '../components/ChapterList';
 import '../styles/MangaDetailsPage.css';
 
@@ -114,6 +115,7 @@ function MangaDetailsPage() {
 
   const displayTitle = getTitle(manga.title);
   const description = getDescription(manga.description);
+  const proxiedCoverUrl = getProxiedImageUrl(manga.coverUrl);
 
   return (
     <div className="manga-details-page">
@@ -123,8 +125,8 @@ function MangaDetailsPage() {
 
       <div className="manga-header">
         <div className="manga-cover-large">
-          {manga.coverUrl ? (
-            <img src={manga.coverUrl} alt={displayTitle} />
+          {proxiedCoverUrl ? (
+            <img src={proxiedCoverUrl} alt={displayTitle} />
           ) : (
             <div className="no-cover-large">No Cover</div>
           )}
