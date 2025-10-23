@@ -133,7 +133,131 @@ DANGEROUSLY_DISABLE_HOST_CHECK=true
 
 ## API Integration Errors
 
-### Error 3: MangaDex Cover Images Not Loading
+### Error 3: MangaDex API Connection Timeout / ISP Blocking
+
+**Error Message:**
+```
+AxiosError: timeout of 10000ms exceeded
+Error: AxiosError: timeout of 10000ms exceeded
+  at RedirectableRequest.handleRequestTimeout
+MangaDex API Error: No response received
+```
+
+**Symptoms:**
+- Frontend shows "Failed to load manga. Please try again."
+- Backend logs show repeated timeout errors after 10 seconds
+- Search functionality doesn't work
+- All MangaDex API requests fail
+- Console shows "API Error: 500" with timeout messages
+
+**Root Cause:**
+In some regions (particularly Indonesia and other countries with internet filtering), ISPs block access to MangaDex API using DNS filtering systems like "Internet Positif". When you try to access `api.mangadex.org`, the DNS is redirected to a filtering server (e.g., `internetpositif3.firstmedia.com`), causing all requests to timeout.
+
+**How to Diagnose:**
+1. Test connectivity to MangaDex API:
+   ```bash
+   curl -I https://api.mangadex.org/manga
+   ```
+
+2. Check DNS resolution:
+   ```bash
+   ping api.mangadex.org
+   ```
+
+3. If you see responses from domains like `internetpositif.com` or similar filtering servers, your ISP is blocking MangaDex.
+
+**Solution 1: Use a VPN (Recommended - Easiest)**
+
+Install and connect to a VPN service:
+
+**Free VPN Options:**
+- **Cloudflare WARP** (recommended): https://1.1.1.1/
+  - Download and install WARP app
+  - Toggle "Connected"
+  - No configuration needed
+
+- **ProtonVPN**: https://protonvpn.com/ (free tier available)
+- **Windscribe**: https://windscribe.com/ (free 10GB/month)
+
+**After connecting to VPN:**
+1. Restart your backend server (stop and run `npm run dev` again)
+2. Refresh the frontend
+3. MangaDex API should now be accessible
+
+**Solution 2: Change DNS Settings**
+
+If you cannot use a VPN, try changing your DNS to bypass ISP filtering:
+
+**Windows (via Command Prompt as Administrator):**
+```cmd
+# For Ethernet
+netsh interface ip set dns "Ethernet" static 1.1.1.1
+netsh interface ip add dns "Ethernet" 8.8.8.8 index=2
+
+# For Wi-Fi
+netsh interface ip set dns "Wi-Fi" static 1.1.1.1
+netsh interface ip add dns "Wi-Fi" 8.8.8.8 index=2
+
+# Flush DNS cache
+ipconfig /flushdns
+```
+
+**Windows (via GUI):**
+1. Open Control Panel → Network and Internet → Network Connections
+2. Right-click your network adapter → Properties
+3. Select "Internet Protocol Version 4 (TCP/IPv4)" → Properties
+4. Select "Use the following DNS server addresses":
+   - Preferred DNS: `1.1.1.1` (Cloudflare)
+   - Alternate DNS: `8.8.8.8` (Google)
+5. Click OK
+6. Open Command Prompt and run: `ipconfig /flushdns`
+7. Restart your network adapter or reboot
+
+**Mac/Linux:**
+```bash
+# Edit network settings and set DNS to:
+# Primary: 1.1.1.1
+# Secondary: 8.8.8.8
+
+# Flush DNS cache (Mac)
+sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
+
+# Flush DNS cache (Linux)
+sudo systemd-resolve --flush-caches
+```
+
+**Solution 3: Use a Proxy (Advanced)**
+
+If you have access to a proxy server, you can configure the backend to use it. This requires modifying `backend/src/services/mangadex.js` to add proxy configuration to axios.
+
+**Verification:**
+
+After applying any solution, test with:
+```bash
+curl -I https://api.mangadex.org/manga
+```
+
+You should see:
+```
+HTTP/2 200
+content-type: application/json
+```
+
+**Prevention:**
+- Keep VPN installed for development in regions with internet filtering
+- Consider using a cloud-based development environment
+- Deploy backend to a cloud provider (Railway, Heroku) that isn't affected by regional restrictions
+- Document this requirement in README for developers in affected regions
+
+**Related Error Messages:**
+- `ECONNABORTED`
+- `timeout of 10000ms exceeded`
+- `No response received`
+- DNS resolving to `internetpositif` or similar filtering domains
+
+---
+
+### Error 4: MangaDex Cover Images Not Loading
 
 **Error Message:**
 ```
@@ -256,7 +380,7 @@ The manga details page uses `quality = 'original'` parameter, which in the origi
 
 ---
 
-### Error 4: MangaDex API 400 - Invalid translatedLanguage Parameter
+### Error 5: MangaDex API 400 - Invalid translatedLanguage Parameter
 
 **Error Message:**
 ```
@@ -358,7 +482,7 @@ router.get('/:id/feed', verifyAuth, async (req, res, next) => {
 
 ## Authentication & Authorization Errors
 
-### Error 5: Firebase Authentication Not Enabled (Potential)
+### Error 6: Firebase Authentication Not Enabled (Potential)
 
 **Potential Error Message:**
 ```
@@ -390,7 +514,7 @@ Email/Password authentication method is not enabled in Firebase Console.
 
 ---
 
-### Error 6: Firestore Database Not Created (Potential)
+### Error 7: Firestore Database Not Created (Potential)
 
 **Potential Error Message:**
 ```
@@ -581,6 +705,7 @@ api.interceptors.response.use(
 |-------|-----------|
 | `Cannot find module './src/config/serviceAccountKey.json'` | Check file exists at `backend/src/config/serviceAccountKey.json` |
 | `Webpack Dev Server invalid options` | Add WDS environment variables to `frontend/.env` |
+| `timeout of 10000ms exceeded` / `MangaDex API timeout` | **Use VPN (Cloudflare WARP)** or change DNS to 1.1.1.1 - ISP blocking MangaDex |
 | `Cover images not loading` | Check cover URL format, clear backend cache with `curl -X POST http://localhost:5000/api/cache/clear` |
 | `MangaDex API 400 error` | Check API parameter names match documentation |
 | `Firebase: Error (auth/operation-not-allowed)` | Enable Email/Password auth in Firebase Console |
@@ -593,6 +718,17 @@ api.interceptors.response.use(
 ---
 
 ### 6. Debugging Tools & Commands
+
+**Check MangaDex API Connectivity:**
+```bash
+# Test if MangaDex API is accessible
+curl -I https://api.mangadex.org/manga
+
+# Check DNS resolution
+ping api.mangadex.org
+
+# If you see "internetpositif" or similar filtering domains, use VPN
+```
 
 **Check if ports are in use:**
 ```bash
