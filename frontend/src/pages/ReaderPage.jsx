@@ -7,6 +7,7 @@ import {
   cacheChapter,
   isChapterCached,
 } from '../services/offlineCache';
+import { getProxiedImageUrl } from '../utils/imageProxy';
 import { FaBookmark, FaDownload, FaTimes, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import '../styles/ReaderPage.css';
 
@@ -212,7 +213,7 @@ function ReaderPage() {
     pagesToPreload.forEach((pageNum) => {
       if (pageNum < images.length && !preloadedImages.has(pageNum)) {
         const img = new Image();
-        img.src = images[pageNum].url;
+        img.src = getProxiedImageUrl(images[pageNum].url);
         img.onload = () => {
           setPreloadedImages((prev) => new Set([...prev, pageNum]));
         };
@@ -232,10 +233,12 @@ function ReaderPage() {
       return newErrors;
     });
 
-    // Force reload the image
+    // Force reload the image with proxied URL
     if (imageRefs.current[pageIndex]) {
       const img = imageRefs.current[pageIndex];
-      img.src = images[pageIndex].url + '?retry=' + Date.now();
+      const originalUrl = images[pageIndex].url;
+      const retryUrl = originalUrl + (originalUrl.includes('?') ? '&' : '?') + 'retry=' + Date.now();
+      img.src = getProxiedImageUrl(retryUrl);
     }
   }
 
@@ -280,6 +283,9 @@ function ReaderPage() {
 
   const currentImage = images[currentPage];
   const hasError = imageLoadErrors[currentPage];
+
+  // Proxy the image URL to bypass hotlink protection
+  const proxiedImageUrl = currentImage ? getProxiedImageUrl(currentImage.url) : null;
 
   return (
     <div
@@ -345,7 +351,7 @@ function ReaderPage() {
         ) : (
           <img
             ref={(el) => (imageRefs.current[currentPage] = el)}
-            src={currentImage.url}
+            src={proxiedImageUrl}
             alt={`Page ${currentPage + 1}`}
             className="reader-image"
             onError={() => handleImageError(currentPage)}

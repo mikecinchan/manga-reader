@@ -1,6 +1,10 @@
 /**
  * Image Proxy Utility
- * Handles proxying of MangaDex cover images to bypass hotlink protection
+ * Handles proxying of MangaDex images to bypass hotlink protection
+ *
+ * Proxies both:
+ * - Cover images from uploads.mangadex.org
+ * - Chapter images from MangaDex@Home servers
  *
  * In development: Uses direct URLs (works on localhost)
  * In production: Proxies through Netlify serverless function
@@ -21,8 +25,15 @@ export function getProxiedImageUrl(imageUrl) {
   }
 
   // In production, proxy through Netlify serverless function
-  // Only proxy MangaDex URLs
-  if (imageUrl.startsWith('https://uploads.mangadex.org/')) {
+  // Proxy all MangaDex-related URLs:
+  // 1. Cover images: https://uploads.mangadex.org/covers/...
+  // 2. Chapter images from MangaDex@Home: various servers with /data/ or /data-saver/ paths
+  const isMangaDexUrl =
+    imageUrl.startsWith('https://uploads.mangadex.org/') ||
+    imageUrl.includes('mangadex.org') ||
+    imageUrl.match(/https?:\/\/[^/]+\/data(-saver)?\/[a-f0-9]+\//);
+
+  if (isMangaDexUrl) {
     const encodedUrl = encodeURIComponent(imageUrl);
     return `/.netlify/functions/image-proxy?url=${encodedUrl}`;
   }

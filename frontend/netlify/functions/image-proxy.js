@@ -1,10 +1,14 @@
 const axios = require('axios');
 
 /**
- * Netlify Serverless Function to proxy MangaDex cover images
+ * Netlify Serverless Function to proxy MangaDex images
  * This bypasses hotlink protection by fetching images server-side
  *
- * Usage: /.netlify/functions/image-proxy?url=https://uploads.mangadex.org/covers/...
+ * Handles:
+ * - Cover images: https://uploads.mangadex.org/covers/...
+ * - Chapter images: MangaDex@Home servers (various domains)
+ *
+ * Usage: /.netlify/functions/image-proxy?url=<encoded-image-url>
  */
 exports.handler = async (event, context) => {
   // Only allow GET requests
@@ -26,8 +30,11 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Validate that the URL is from MangaDex
-    if (!imageUrl.startsWith('https://uploads.mangadex.org/')) {
+    // Validate that the URL is from MangaDex (cover images or MangaDex@Home servers)
+    const isMangaDexCover = imageUrl.startsWith('https://uploads.mangadex.org/');
+    const isMangaDexHome = imageUrl.includes('mangadex.org') || imageUrl.match(/https?:\/\/[^\/]+\/data(-saver)?\/[a-f0-9]+\//);
+
+    if (!isMangaDexCover && !isMangaDexHome) {
       return {
         statusCode: 403,
         body: JSON.stringify({ error: 'Invalid image URL. Only MangaDex URLs are allowed.' })
