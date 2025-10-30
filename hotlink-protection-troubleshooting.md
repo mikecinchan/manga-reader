@@ -17,9 +17,10 @@
 
 This document provides comprehensive documentation of the hotlink protection issue encountered when deploying the MangaDex Reader application to Netlify, and the serverless proxy solution implemented to resolve it.
 
-**Issue Status:** ✅ RESOLVED
+**Issue Status:** ✅ RESOLVED (Both cover images AND chapter images)
 **Production URL:** https://mangadex-reader.netlify.app/
-**Date Resolved:** 2025-10-18
+**Date Resolved:** 2025-10-30 (Phase 2: Chapter images)
+**Initial Resolution:** 2025-10-18 (Phase 1: Cover images)
 
 ---
 
@@ -27,12 +28,19 @@ This document provides comprehensive documentation of the hotlink protection iss
 
 ### Symptoms
 
-When accessing the deployed MangaDex Reader application on Netlify (https://mangadex-reader.netlify.app/), manga cover images failed to load. The symptoms included:
+When accessing the deployed MangaDex Reader application on Netlify (https://mangadex-reader.netlify.app/), both cover images and chapter images failed to load:
 
+**Phase 1 - Cover Images Issue:**
 1. **Missing cover images** on the homepage search results
 2. **Gray placeholder boxes** displaying "View Details" instead of manga covers
 3. **Browser console errors** showing failed image requests
 4. **404 or 403 HTTP errors** when attempting to load images from `https://uploads.mangadex.org/covers/`
+
+**Phase 2 - Chapter Images Issue:**
+1. **"You can read this at: https://mangadex.org/"** message displayed instead of manga pages
+2. **Chapter reader showing blocking page** with MangaDex logo
+3. **404 or 403 errors** when loading chapter images from MangaDex@Home servers
+4. **Unable to read any manga chapters** on the deployed site
 
 ### Environment-Specific Behavior
 
@@ -42,18 +50,21 @@ When accessing the deployed MangaDex Reader application on Netlify (https://mang
 - All functionality worked as expected
 
 **❌ Broken on Netlify (`https://mangadex-reader.netlify.app/`):**
-- Cover images failed to load
+- Cover images failed to load (Phase 1 issue)
+- Chapter images blocked with "Read at mangadex.org" message (Phase 2 issue)
 - Identical code, different domain
-- Only cover images affected (not chapter images from MangaDex@Home)
+- Both cover and chapter images affected by hotlink protection
 
 ### Root Cause Analysis
 
-The issue was caused by **MangaDex's hotlink protection** on their cover image CDN (`uploads.mangadex.org`).
+The issue was caused by **MangaDex's hotlink protection** on both their image CDNs:
+1. **Cover images:** `uploads.mangadex.org`
+2. **Chapter images:** MangaDex@Home network (various server domains)
 
 **Why localhost worked but Netlify didn't:**
 - **Localhost:** Browsers treat `localhost` as a special case and often don't send `Referer` headers, or MangaDex allows it
 - **Netlify production:** Requests from `mangadex-reader.netlify.app` included `Referer` headers pointing to the Netlify domain
-- **MangaDex's server:** Rejected requests with `Referer` headers from unauthorized domains
+- **MangaDex's servers:** Rejected requests with `Referer` headers from unauthorized domains for both cover and chapter images
 
 ---
 
@@ -86,12 +97,12 @@ Hotlink protection (also called "inline linking" or "leeching") is a security me
 
 ### MangaDex's Implementation
 
-MangaDex implements hotlink protection on cover images specifically:
+MangaDex implements hotlink protection on all image resources:
 
 - **Cover images** (`https://uploads.mangadex.org/covers/`): **Protected** ❌
-- **Chapter images** (via MangaDex@Home): **Not protected** ✅ (uses token-based access)
+- **Chapter images** (via MangaDex@Home): **Protected** ❌ (Referer-based protection)
 
-This is why our chapter reader worked fine but cover images didn't.
+Both types of images require proper headers or proxying to work from external domains.
 
 ---
 
@@ -99,11 +110,12 @@ This is why our chapter reader worked fine but cover images didn't.
 
 ### Solution Overview
 
-We implemented a **serverless proxy** using Netlify Functions that:
+We implemented a **serverless proxy** using Netlify Functions that handles both cover and chapter images:
 
-1. Accepts image URL requests from our frontend
+1. Accepts image URL requests from our frontend (both cover and chapter URLs)
 2. Fetches images server-side (where `Referer` headers are controlled)
 3. Returns images to the frontend as if they were hosted on our domain
+4. Works for both `uploads.mangadex.org` (covers) and MangaDex@Home servers (chapters)
 
 ### Architecture Diagram
 
@@ -185,8 +197,11 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Validate that the URL is from MangaDex (security measure)
-    if (!imageUrl.startsWith('https://uploads.mangadex.org/')) {
+    // Validate that the URL is from MangaDex (cover images or MangaDex@Home servers)
+    const isMangaDexCover = imageUrl.startsWith('https://uploads.mangadex.org/');
+    const isMangaDexHome = imageUrl.includes('mangadex.org') || imageUrl.match(/https?:\/\/[^/]+\/data(-saver)?\/[a-f0-9]+\//);
+
+    if (!isMangaDexCover && !isMangaDexHome) {
       return {
         statusCode: 403,
         body: JSON.stringify({ error: 'Invalid image URL. Only MangaDex URLs are allowed.' })
@@ -272,8 +287,15 @@ export function getProxiedImageUrl(imageUrl) {
   }
 
   // In production, proxy through Netlify serverless function
-  // Only proxy MangaDex URLs
-  if (imageUrl.startsWith('https://uploads.mangadex.org/')) {
+  // Proxy all MangaDex-related URLs:
+  // 1. Cover images: https://uploads.mangadex.org/covers/...
+  // 2. Chapter images from MangaDex@Home: various servers with /data/ or /data-saver/ paths
+  const isMangaDexUrl =
+    imageUrl.startsWith('https://uploads.mangadex.org/') ||
+    imageUrl.includes('mangadex.org') ||
+    imageUrl.match(/https?:\/\/[^/]+\/data(-saver)?\/[a-f0-9]+\//);
+
+  if (isMangaDexUrl) {
     const encodedUrl = encodeURIComponent(imageUrl);
     return `/.netlify/functions/image-proxy?url=${encodedUrl}`;
   }
@@ -290,7 +312,7 @@ export function getProxiedImageUrl(imageUrl) {
 
 ### 3. Component Integration
 
-Updated three components to use the proxy utility:
+Updated four components to use the proxy utility:
 
 #### MangaCard.jsx (Search Results)
 
@@ -331,6 +353,31 @@ function BookmarksPage() {
 
   return (
     <img src={proxiedCoverUrl} alt={bookmark.mangaTitle} />
+  );
+}
+```
+
+#### ReaderPage.jsx (Chapter Reader)
+
+```javascript
+import { getProxiedImageUrl } from '../utils/imageProxy';
+
+function ReaderPage() {
+  const currentImage = images[currentPage];
+  const proxiedImageUrl = currentImage ? getProxiedImageUrl(currentImage.url) : null;
+
+  // Also used in preloading
+  function preloadAdjacentImages() {
+    pagesToPreload.forEach((pageNum) => {
+      if (pageNum < images.length) {
+        const img = new Image();
+        img.src = getProxiedImageUrl(images[pageNum].url);
+      }
+    });
+  }
+
+  return (
+    <img src={proxiedImageUrl} alt={`Page ${currentPage + 1}`} />
   );
 }
 ```
@@ -412,9 +459,11 @@ Expected behaviors:
 **Production URL:** https://mangadex-reader.netlify.app/
 
 ✅ All cover images loading correctly
+✅ All chapter images loading correctly (no blocking messages)
 ✅ No console errors
 ✅ Function executing within performance limits
 ✅ Browser caching working (subsequent loads are instant)
+✅ Chapter reader fully functional with all pages displaying
 
 ---
 
@@ -908,7 +957,23 @@ curl -I "https://mangadex-reader.netlify.app/.netlify/functions/image-proxy?url=
 
 ---
 
-**Document Version:** 1.0
-**Last Updated:** 2025-10-18
-**Status:** ✅ Issue Resolved - Production Verified
+**Document Version:** 2.0
+**Last Updated:** 2025-10-30
+**Status:** ✅ All Issues Resolved - Production Verified (Cover + Chapter Images)
 **Maintainer:** MangaDex Reader Development Team
+
+## Changelog
+
+### Version 2.0 (2025-10-30)
+- ✅ Extended proxy to handle chapter images from MangaDex@Home servers
+- ✅ Updated validation logic to accept MangaDex@Home URLs
+- ✅ Enhanced imageProxy utility with regex pattern matching
+- ✅ Modified ReaderPage.jsx to proxy chapter images
+- ✅ Verified chapter pages load correctly in production
+- ✅ No more "You can read this at mangadex.org" blocking messages
+
+### Version 1.0 (2025-10-18)
+- ✅ Initial implementation for cover images
+- ✅ Created Netlify serverless function
+- ✅ Implemented imageProxy utility
+- ✅ Updated MangaCard, MangaDetailsPage, and BookmarksPage components
